@@ -6,7 +6,7 @@ Plugin Hermes/Alfred per Outlook (Microsoft 365) di UNA casella (il CEO): lettur
 segreti via `agent.secret_scope`, hook `pre_tool_call`, scansione "safe").
 
 ## Comandi
-- `uv run --no-project --with pytest pytest -q tests` (fake Graph in `tests/conftest.py`), `uvx ruff check .`
+- `uv run --no-project --with pytest --with cryptography pytest -q tests` (fake Graph in `tests/conftest.py`), `uvx ruff check .`
 - Contratti: dall'albero Alfred `../alfred-venv/bin/python -m hermes_cli.main plugins doctor <repo> --ci` e `plugins validate`.
 - End-to-end: `uv run --no-project --with pytest python dev/fake_graph.py 8765` + `HERMES_HOME` usa-e-getta con il plugin
   in `plugins/alfred-m365/`, setting `graph_base_url: http://127.0.0.1:8765/v1.0`, `.env` con i tre `MSGRAPH_*`
@@ -27,4 +27,7 @@ segreti via `agent.secret_scope`, hook `pre_tool_call`, scansione "safe").
   corrispondenti; indirizzi mai visti → `warning` (i modelli inventano indirizzi plausibili).
 - Orari: input locali nel `timezone` della casella; Graph riceve nomi Windows (`graph.WINDOWS_TZ`) e `Prefer:
   outlook.timezone` su ogni lettura. `graph_base_url` accetta solo loopback (il bearer token va lì).
+- Credenziale preferita: certificato (`certauth.py`, `alfred outlook keygen`): chiave generata sulla macchina,
+  all'IT va solo il `.cer`; token con client assertion RS256 (header `x5t` + `x5t#S256`). `cryptography` arriva
+  dal runtime Alfred, import solo dentro `certauth` (il ramo secret resta stdlib). Il secret è fallback.
 - Il client secret non deve mai comparire in output o errori (test dedicato).

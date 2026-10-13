@@ -74,6 +74,10 @@ class FakeGraph:
         if "/oauth2/v2.0/token" in url:
             self.token_calls += 1
             form = urllib.parse.parse_qs((body or b"").decode())
+            if "client_assertion" in form:
+                if not self.verify_assertion(form["client_assertion"][0], url):
+                    return 401, {}, json.dumps({"error": "invalid_client", "error_description": "AADSTS700027: bad assertion"}).encode()
+                return 200, {}, json.dumps({"access_token": f"tok{self.token_calls}", "expires_in": 3600}).encode()
             if form.get("client_secret") != [SECRET]:
                 return 401, {}, json.dumps({"error": "invalid_client", "error_description": "AADSTS7000215: Invalid client secret provided."}).encode()
             return 200, {}, json.dumps({"access_token": f"tok{self.token_calls}", "expires_in": 3600}).encode()
@@ -92,6 +96,29 @@ class FakeGraph:
         if user != MAILBOX:
             return 403, {}, json.dumps({"error": {"code": "ErrorAccessDenied", "message": "Access is denied."}}).encode()
         return self._route(method, rest, query, data, headers)
+
+    cert_path: Path | None = None  # the "uploaded" certificate (tests set it)
+
+    def verify_assertion(self, jwt: str, token_url: str) -> bool:
+        import base64
+
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import padding
+
+        def unb64(part: str) -> bytes:
+            return base64.urlsafe_b64decode(part + "=" * (-len(part) % 4))
+
+        if self.cert_path is None:
+            return False
+        head, claims, sig = jwt.split(".")
+        cert = x509.load_pem_x509_certificate(self.cert_path.read_bytes())
+        try:
+            cert.public_key().verify(unb64(sig), f"{head}.{claims}".encode(), padding.PKCS1v15(), hashes.SHA256())
+        except Exception:  # noqa: BLE001
+            return False
+        data = json.loads(unb64(claims))
+        return data["aud"] == token_url and data["iss"] == data["sub"] == "client-1" and data["exp"] > data["iat"]
 
     def _ok(self, payload: Any, status: int = 200):
         return status, {}, json.dumps(payload).encode()

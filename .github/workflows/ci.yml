@@ -18,7 +18,7 @@ jobs:
       - name: Lint
         run: uvx ruff check .
       - name: Unit tests (fake Microsoft Graph, no network)
-        run: uv run --no-project --with pytest pytest -q tests
+        run: uv run --no-project --with pytest --with cryptography pytest -q tests
 
   hermes-contract:
     # Loads the plugin with the real Hermes runtime contracts (network blocked) and runs the

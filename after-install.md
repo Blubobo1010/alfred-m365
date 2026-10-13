@@ -2,6 +2,8 @@ alfred-m365 is installed (Outlook tools, toolset `outlook`). It acts on ONE mail
 nothing until you enable writes.
 
 Next steps:
+0. `alfred outlook keygen` — creates the app certificate on this machine; send the printed .cer file
+   (public) to IT, who uploads it in Entra > App registrations > Certificates & secrets.
 1. Set the mailbox (and the owner's name for confirmation prompts):
    `alfred config set plugins.entries.alfred-m365.settings.mailbox luca.betti@example.com`
    `alfred config set plugins.entries.alfred-m365.settings.owner_name Luca`

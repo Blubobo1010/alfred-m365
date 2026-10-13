@@ -25,7 +25,8 @@ events the mailbox organises, never a whole series. Refused calls never reach th
 ## Install
 
 ```bash
-alfred plugins install Blubobo1010/alfred-m365 --enable      # prompts for MSGRAPH_TENANT_ID / CLIENT_ID / CLIENT_SECRET
+alfred plugins install Blubobo1010/alfred-m365 --enable      # prompts for MSGRAPH_TENANT_ID / MSGRAPH_CLIENT_ID
+alfred outlook keygen                                        # key stays here; send the printed .cer to IT
 alfred config set plugins.entries.alfred-m365.settings.mailbox ceo@company.com
 alfred config set plugins.entries.alfred-m365.settings.owner_name Luca
 alfred outlook test --other someone.else@company.com         # the other mailbox must be DENIED
@@ -33,6 +34,9 @@ alfred config set plugins.entries.alfred-m365.settings.write_enabled true
 alfred gateway restart
 ```
 
+Credential: a **certificate** generated on the machine (`alfred outlook keygen`, RSA 2048, two
+years, key file mode 600 in `$HERMES_HOME/alfred-m365/`). IT uploads only the public `.cer` in Entra
+(Certificates & secrets), so no secret ever travels; `MSGRAPH_CLIENT_SECRET` still works as a fallback.
 IT registers the app and assigns the Exchange roles (procedure: RBAC for Applications, no Graph
 application permissions and no admin consent in Entra). Settings: `mailbox`, `owner_name`,
 `timezone` (default Europe/Rome), `write_enabled`, `approve_drafts` (also confirm drafts),
@@ -44,7 +48,7 @@ Note: `alfred -z` (one-shot) runs in YOLO mode and skips every approval by desig
 ## Development
 
 ```bash
-uv run --no-project --with pytest pytest -q tests     # fake Graph, no network
+uv run --no-project --with pytest --with cryptography pytest -q tests     # fake Graph, no network
 uvx ruff check .
 uv run --no-project --with pytest python dev/fake_graph.py 8765   # local fake Graph for end-to-end runs
 ```

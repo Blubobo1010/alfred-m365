@@ -83,7 +83,8 @@ def graph_tz(name: str) -> str:
 class GraphClient:
     def __init__(self, tenant_id: str, client_id: str, client_secret: str, mailbox: str, *, timezone: str = "Europe/Rome",
                  timeout: float = 30, base_url: str = GRAPH_BASE_URL, authority_url: str = AUTHORITY_URL,
-                 transport: Transport | None = None, sleep: Callable[[float], None] | None = None):
+                 transport: Transport | None = None, sleep: Callable[[float], None] | None = None,
+                 certificate_dir: Any = None):
         if not re.fullmatch(r"[^@\s/]+@[^@\s/]+\.[^@\s/]+", mailbox or ""):
             raise GraphError("bad_config", f"mailbox {mailbox!r} is not an email address",
                              "Set plugins.entries.alfred-m365.settings.mailbox to the CEO's address.")
@@ -94,15 +95,25 @@ class GraphClient:
         self._transport = transport or default_transport
         self._sleep = sleep or (lambda seconds: time.sleep(seconds))
         self._token: tuple[str, float] | None = None
+        self._cert_dir = certificate_dir  # used when there is no client secret (certauth.py)
+        if not client_secret and certificate_dir is None:
+            raise GraphError("not_configured", "no client secret and no certificate",
+                             "Run `alfred outlook keygen` and have IT upload the certificate, or set MSGRAPH_CLIENT_SECRET.")
 
     # ---- auth -----------------------------------------------------------------------------
 
     def _access_token(self, force: bool = False) -> str:
         if self._token and not force and self._token[1] - TOKEN_SKEW_SECONDS > time.time():
             return self._token[0]
-        form = urllib.parse.urlencode({"client_id": self._client_id, "client_secret": self._secret,
-                                       "scope": SCOPE, "grant_type": "client_credentials"}).encode()
         url = f"{self._authority}/{urllib.parse.quote(self._tenant, safe='')}/oauth2/v2.0/token"
+        fields = {"client_id": self._client_id, "scope": SCOPE, "grant_type": "client_credentials"}
+        if self._secret:
+            fields["client_secret"] = self._secret
+        else:  # certificate credential: a signed assertion, the private key never leaves this machine
+            from .certauth import client_assertion
+            fields.update({"client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                           "client_assertion": client_assertion(self._cert_dir, self._client_id, url)})
+        form = urllib.parse.urlencode(fields).encode()
         try:
             status, _h, raw = self._transport("POST", url, {"Content-Type": "application/x-www-form-urlencoded"},
                                               form, self._timeout)
@@ -113,7 +124,8 @@ class GraphClient:
             desc = str((data or {}).get("error_description") or (data or {}).get("error") or f"HTTP {status}")
             desc = desc.replace(self._secret, "***") if self._secret else desc
             raise GraphError("auth_failed", f"Microsoft login failed: {desc.splitlines()[0][:300]}",
-                             "Check MSGRAPH_TENANT_ID, MSGRAPH_CLIENT_ID and MSGRAPH_CLIENT_SECRET (expired secret?).",
+                             "Check MSGRAPH_TENANT_ID and MSGRAPH_CLIENT_ID, and that the certificate shown by `alfred outlook keygen --show` "
+                             "(or MSGRAPH_CLIENT_SECRET) is the one uploaded in Entra and not expired.",
                              status=status)
         self._token = (str(data["access_token"]), time.time() + float(data.get("expires_in") or 3600))
         return self._token[0]

@@ -15,8 +15,9 @@ requires_env:
     description: "Directory (tenant) ID of the Entra app registered by IT (Entra ID > App registrations > Overview)"
   - name: MSGRAPH_CLIENT_ID
     description: "Application (client) ID of the same app"
+optional_env:
   - name: MSGRAPH_CLIENT_SECRET
-    description: "Client secret of the app, entered by IT on this machine (never sent by mail or chat)"
+    description: "Only if you do not use a certificate (recommended: `alfred outlook keygen`, IT uploads the .cer). Never send a secret by mail or chat"
     secret: true
 provides_tools:
   - outlook_search_mail
@@ -62,6 +63,10 @@ config_schema:
     type: int
     default: 6000
     description: "Cap on the email text returned by outlook_read_mail"
+  certificate_dir:
+    type: str
+    default: ""
+    description: "Folder with the app certificate created by `alfred outlook keygen`; empty = $HERMES_HOME/alfred-m365"
   timeout_seconds:
     type: int
     default: 30

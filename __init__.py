@@ -16,7 +16,7 @@ from .settings import bind_context, is_configured, write_enabled
 
 __version__ = "0.1.0"
 TOOLSET = "outlook"
-REQUIRED_ENV = ["MSGRAPH_TENANT_ID", "MSGRAPH_CLIENT_ID", "MSGRAPH_CLIENT_SECRET"]
+REQUIRED_ENV = ["MSGRAPH_TENANT_ID", "MSGRAPH_CLIENT_ID"]  # + certificate (keygen) or MSGRAPH_CLIENT_SECRET
 
 _TOOLS = (
     ("outlook_search_mail", schemas.OUTLOOK_SEARCH_MAIL, tools.outlook_search_mail, "📬", is_configured),
@@ -39,7 +39,7 @@ def register(ctx) -> None:
     ctx.register_hook("pre_tool_call", pre_tool_call)
     ctx.register_skill("outlook", Path(__file__).parent / "skills" / "outlook" / "SKILL.md")
     ctx.register_cli_command(
-        name="outlook", help="Microsoft 365 connection: test, whoami",
+        name="outlook", help="Microsoft 365 connection: keygen, test, whoami",
         setup_fn=register_cli, handler_fn=outlook_command,
         description="Check the Outlook mail and calendar connection used by the outlook_* tools.",
     )
