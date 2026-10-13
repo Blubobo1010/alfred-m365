@@ -1,0 +1,68 @@
+name: alfred-m365
+version: 0.1.0
+manifest_version: 2
+api_version: 1
+label: "Outlook (Microsoft 365)"
+description: "The CEO's Outlook mailbox and calendar over Microsoft Graph (app-only, one mailbox): search and read mail, list the calendar and free time; optionally prepare email drafts (never sent) and create or move appointments, each calendar change confirmed by a human."
+author: Blubobo1010
+license: MIT
+homepage: https://github.com/Blubobo1010/alfred-m365
+tags: [email, calendar, outlook, microsoft-365]
+kind: standalone
+requires_hermes: ">=0.21.6"
+requires_env:
+  - name: MSGRAPH_TENANT_ID
+    description: "Directory (tenant) ID of the Entra app registered by IT (Entra ID > App registrations > Overview)"
+  - name: MSGRAPH_CLIENT_ID
+    description: "Application (client) ID of the same app"
+  - name: MSGRAPH_CLIENT_SECRET
+    description: "Client secret of the app, entered by IT on this machine (never sent by mail or chat)"
+    secret: true
+provides_tools:
+  - outlook_search_mail
+  - outlook_read_mail
+  - outlook_list_events
+  - outlook_find_free_time
+  - outlook_create_draft
+  - outlook_update_draft
+  - outlook_create_event
+  - outlook_update_event
+provides_hooks:
+  - pre_tool_call
+config_schema:
+  mailbox:
+    type: str
+    default: ""
+    label: "Mailbox"
+    description: "The only mailbox the tools read and write, e.g. the CEO's address. The app's Exchange RBAC scope must include it"
+  owner_name:
+    type: str
+    default: ""
+    label: "Mailbox owner's name"
+    description: "Shown in approval prompts (\"in Luca's calendar\"); empty = the mailbox address"
+  timezone:
+    type: str
+    default: "Europe/Rome"
+    description: "IANA time zone for every time the assistant reads or writes"
+  write_enabled:
+    type: bool
+    default: false
+    label: "Enable drafts and calendar writes"
+    description: "Exposes outlook_create_draft, outlook_update_draft, outlook_create_event and outlook_update_event. Nothing is ever sent or deleted; calendar changes are confirmed by a human first"
+  approve_drafts:
+    type: bool
+    default: false
+    label: "Confirm drafts too"
+    description: "Also ask for confirmation before preparing or editing a draft (drafts are never sent either way)"
+  default_limit:
+    type: int
+    default: 15
+    description: "Emails per search (max 50)"
+  max_body_chars:
+    type: int
+    default: 6000
+    description: "Cap on the email text returned by outlook_read_mail"
+  timeout_seconds:
+    type: int
+    default: 30
+    description: "HTTP timeout per Microsoft Graph call"
