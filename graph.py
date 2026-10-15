@@ -19,7 +19,7 @@ import urllib.request
 from collections.abc import Callable
 from typing import Any
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0"
 AUTHORITY_URL = "https://login.microsoftonline.com"
@@ -242,7 +242,7 @@ class GraphClient:
     # ---- calendar -----------------------------------------------------------------------------
 
     EVENT_FIELDS = "id,subject,start,end,location,attendees,organizer,isOrganizer,isAllDay,isOnlineMeeting,onlineMeeting," \
-                   "showAs,type,seriesMasterId,webLink,isCancelled,bodyPreview"
+                   "showAs,type,seriesMasterId,webLink,isCancelled,bodyPreview,responseStatus,sensitivity"
 
     def list_events(self, start: str, end: str, limit: int = 100) -> list[dict[str, Any]]:
         data = self._call("GET", "/calendarView", params={

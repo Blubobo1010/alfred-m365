@@ -5,7 +5,10 @@ the CEO's mailbox and calendar, over Microsoft Graph with an app-only Entra regi
 Exchange **RBAC for Applications** to one mailbox.
 
 - **Read**: `outlook_search_mail`, `outlook_read_mail` (email text marked as untrusted data),
-  `outlook_list_events`, `outlook_find_free_time` (working hours from Outlook).
+  `outlook_list_events`, `outlook_find_free_time` (working hours from Outlook). Events also carry the
+  CEO's response, the sensitivity, the rooms booked and the invitation's own text (`agenda`, without
+  the Teams/Zoom join block, untrusted); `participants:<address>` finds mail from and to a person.
+  alfred-brain's meeting brief is built on these fields.
 - **Drafts** (`write_enabled`): `outlook_create_draft` (new or reply in the thread) and
   `outlook_update_draft`. Drafts land in Outlook's Drafts folder and are **never sent**: the CEO
   reviews and sends them. Names are resolved among his correspondents; an address never seen in the

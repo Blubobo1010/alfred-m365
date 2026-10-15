@@ -23,7 +23,13 @@ segreti via `agent.secret_scope`, hook `pre_tool_call`, scansione "safe").
 - PATCH messaggi solo se `isDraft` (GET prima); PATCH eventi solo se `isOrganizer` e mai `seriesMaster`.
 - Approvazione: eventi sempre; bozze solo con `approve_drafts`. Il `message` (italiano) descrive la modifica dai soli
   argomenti, avvisa degli inviti "a nome di <owner_name>". Hook senza rete, su errore `block`.
-- Testi delle mail = `untrusted_text` + `content_notice` (prompt injection). Destinatari: nomi risolti tra i
+- I campi di `outlook_list_events` (`mailbox` in cima; per evento `id`, `subject`, `start`/`end` con offset,
+  `location`, `online`, `organizer`, `organised_by_ceo`, `attendees`, `rooms`, `my_response`, `sensitivity`,
+  `all_day`, `cancelled`, `agenda`) e di `outlook_search_mail` (`id`, `received`, `from`, `to`, `subject`, `draft`)
+  sono un contratto: il brief delle riunioni di alfred-brain li legge chiamando gli strumenti per nome. Non
+  rinominarli: senza `mailbox`, per esempio, il CEO diventerebbe un partecipante delle sue riunioni senza errori.
+- Testi delle mail = `untrusted_text` + `content_notice` (prompt injection). Anche l'`agenda` degli inviti è testo
+  di terzi: `content_notice` sul risultato di `outlook_list_events`. Destinatari: nomi risolti tra i
   corrispondenti; indirizzi mai visti → `warning` (i modelli inventano indirizzi plausibili).
 - Orari: input locali nel `timezone` della casella; Graph riceve nomi Windows (`graph.WINDOWS_TZ`) e `Prefer:
   outlook.timezone` su ogni lettura. `graph_base_url` accetta solo loopback (il bearer token va lì).

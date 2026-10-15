@@ -108,6 +108,37 @@ def test_list_events_and_free_time(ctx, fake, monkeypatch):
     assert [s["when"] for s in free["slots"]] == ["gio 15/10 10:30–14:00", "gio 15/10 15:00–18:00"]
 
 
+def test_events_carry_what_a_meeting_brief_needs(ctx, fake):
+    out = call(tools.outlook_list_events, {"start": "2026-10-15", "end": "2026-10-15"})
+    production, supplier = out["events"]
+    assert production["attendees"] == ["marta@example.com"] and production["rooms"] == ["Sala Riunioni <sala@example.com>"]
+    assert production["agenda"] == "Ordine del giorno: turni di novembre" and supplier["agenda"] == ""
+    assert (production["my_response"], supplier["my_response"]) == ("organizer", "accepted")
+    assert production["sensitivity"] == "normal" and production["all_day"] is False and "third parties" in out["content_notice"]
+    assert {"responseStatus", "sensitivity"} <= set(fake.calls[-1][2]["$select"].split(","))
+    assert call(tools.outlook_list_events, {"start": "2026-10-16", "end": "2026-10-16"})["events"] == []
+
+
+def test_agenda_keeps_only_the_organisers_words():
+    teams = "Microsoft Teams meeting Join on your computer, mobile app or room device Click here to join the meeting"
+    assert tools.agenda(teams) == ""
+    assert tools.agenda("Punti: prezzi e consegne\r\n____________________ Riunione di Microsoft Teams") == "Punti: prezzi e consegne"
+    assert tools.agenda("Vediamo il prototipo. Join Zoom Meeting https://zoom.us/j/123") == "Vediamo il prototipo"
+    assert tools.agenda("Link: https://acme.teams.microsoft.com/l/meetup-join/x") == "Link"
+    assert tools.agenda("Mario Rossi is inviting you to a scheduled Zoom meeting. Topic: Z20 Time: Oct 16") == ""
+    assert tools.agenda("Mario Rossi ti sta invitando a una riunione Zoom programmata. Argomento: Z20") == ""
+    assert tools.agenda("Prezzi 2027 Join with Google Meet meet.google.com/abc-defg-hij PIN 123") == "Prezzi 2027"
+    assert tools.agenda("Microsoft Teams Serve aiuto? Partecipa alla riunione ora ID riunione: 1") == ""
+    assert tools.agenda(None) == "" and len(tools.agenda("x" * 1000)) == tools.AGENDA_CHARS
+
+
+def test_search_by_participant_finds_both_directions(ctx, fake):
+    out = call(tools.outlook_search_mail, {"query": "participants:marco@fornitore.it", "since": "2026-10-01"})
+    assert fake.calls[-1][2]["$search"] == '"participants:marco@fornitore.it received>=2026-10-01"'
+    assert [m["id"] for m in out["items"]] == [mid(1), mid(3)] and out["items"][1]["from"] == f"Luca <{MAILBOX}>"
+    assert out["items"][0]["received"] == "2026-10-12T10:30+02:00"
+
+
 def test_bad_time_is_a_clear_error(ctx, fake):
     out = call(tools.outlook_create_event, {"subject": "x", "start": "domani alle 10"})
     assert out["error"]["code"] == "bad_time" and fake.calls == []

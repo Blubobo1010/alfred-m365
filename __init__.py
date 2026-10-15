@@ -14,7 +14,7 @@ from .approvals import pre_tool_call
 from .cli import outlook_command, register_cli
 from .settings import bind_context, is_configured, write_enabled
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 TOOLSET = "outlook"
 REQUIRED_ENV = ["MSGRAPH_TENANT_ID", "MSGRAPH_CLIENT_ID"]  # + certificate (keygen) or MSGRAPH_CLIENT_SECRET
 
